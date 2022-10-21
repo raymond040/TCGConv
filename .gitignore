@@ -16,3 +16,4 @@
 *.pdf
 __pycache__/
 *.db
+*.mat
