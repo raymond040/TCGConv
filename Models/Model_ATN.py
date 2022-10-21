@@ -12,7 +12,7 @@ from torchmetrics import F1Score
 from torchmetrics import Precision
 from torchmetrics import Recall
 
-sys.path.insert(0, '/workspaces/Edge-Representation-Learning-in-Temporal-Graph/utils')
+sys.path.insert(0, '/workspaces/TCGConv/utils')
 from util import saveModel,focal_loss,load_checkpoint
   
 class HGT(torch.nn.Module):

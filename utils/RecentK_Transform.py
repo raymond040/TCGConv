@@ -3,7 +3,7 @@ import sys
 HPCFlag=True
 
 if HPCFlag==False:
-    sys.path.insert(0, '/workspaces/Edge-Representation-Learning-in-Temporal-Graph/utils')
+    sys.path.insert(0, '/workspaces/TCGConv/utils')
 else:
     sys.path.insert(0, '/home/svu/e0407728/My_FYP/GNN/Edge-Representation-Learning-in-Temporal-Graph/utils/')
 from Reading_Saving_Batches import Read_Zip

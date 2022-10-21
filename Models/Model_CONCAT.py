@@ -11,7 +11,7 @@ import torchmetrics
 import torch_geometric.transforms as T
 from torch_geometric.nn import SAGEConv, to_hetero
 
-sys.path.insert(0, '/workspaces/Edge-Representation-Learning-in-Temporal-Graph/utils')
+sys.path.insert(0, '/workspaces/TCGConv/utils')
 from util import saveModel,focal_loss,load_checkpoint
 
 class GNNEncoder(torch.nn.Module):

@@ -1,6 +1,6 @@
 #%%  Set Up
 import sys
-sys.path.insert(0, '/workspaces/Edge-Representation-Learning-in-Temporal-Graph/utils')
+sys.path.insert(0, '/workspaces/TCGConv/utils')
 from CGT import CGT
 from DatasetPrep import DatasetPrep
 from TimeHorizon import Time_Batches

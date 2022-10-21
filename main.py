@@ -3,14 +3,14 @@ import sys
 import copy
 import torch_geometric.transforms as T
 
-sys.path.insert(0, '/workspaces/Edge-Representation-Learning-in-Temporal-Graph/utils')
+sys.path.insert(0, '/workspaces/TCGConv/utils')
 from util import setup_device,setup_seed,clean
 from config import parse_args
 from DatasetPrep import DatasetPrep
 from TimeHorizon import Time_Groups
 from CGT import CGT
 from ATN import allnodes
-sys.path.insert(0, '/workspaces/Edge-Representation-Learning-in-Temporal-Graph/Models')
+sys.path.insert(0, '/workspaces/TCGConv/Models')
 from Model_CONCAT import CONCAT_Trainer
 from Model_ATN import ATN_Trainer
 from Model_TCGConv import TCGConv_Trainer
