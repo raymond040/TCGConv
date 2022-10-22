@@ -17,11 +17,9 @@ class DatasetPrep(Dataset):
     Call this function by  `dataset = DatasetPrep(dataset_name, root, type, num_slice, days or percentage)`
     
     Parameters:
-    * dataset_name (str): "MOOC" or "CC" or "YC" or "MS"
-                    MOOC dataset contains ~ 30 days of user actions.
-                    CC dataset contains ~ two years of transactions.
-                    YC dataset contains ~ 
-                    MS dataset contains ~ 2350 days of actions wrt a post
+    * dataset_name (str): "MOOC" or "CC"
+                    MOOC dataset contains ~30 days of user actions.
+                    CC Dataset contains ~two years of transactions.
     * root (str): string with filepath where the mooc dataset is stored in your computer
     * type (str):   G - simply the graph
                     CG - Conjugate_graph approach: edge_ts information is in ts for the nodes. 
