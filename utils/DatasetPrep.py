@@ -20,9 +20,9 @@ class DatasetPrep(Dataset):
     * dataset_name (str): "MOOC" or "CC" or "YC" or "MS"
                     MOOC dataset contains ~ 30 days of user actions.
                     CC dataset contains ~ two years of transactions.
-                    YC dataset contains ~ 
+                    YC dataset contains ~  30 days of reviews
                     MS dataset contains ~ 2350 days of actions wrt a post
-    * root (str): string with filepath where the mooc dataset is stored in your computer
+    * root (str): string with filepath where the dataset is stored in your computer
     * type (str):   G - simply the graph
                     CG - Conjugate_graph approach: edge_ts information is in ts for the nodes. 
     * num_slice (int): number of slices to split the graph, The function splits the time range evenly. 
@@ -266,6 +266,70 @@ class DatasetPrep(Dataset):
 
         #   Convert Merhcant Category into Numeric
         df_edgefeatures = df_lc[Edgefeatures]
+        df_edgefeatures['category'] = pd.factorize(df_edgefeatures['category'])[0]
+
+        graph["customer", "transaction", "merchant"].edge_attr = torch.tensor(df_edgefeatures.to_numpy(), dtype = torch.float)
+        graph["customer", "transaction", "merchant"].edge_label = torch.tensor(df_lc[EdgeLabel].to_numpy(), dtype = torch.long).squeeze()
+        graph["customer", "transaction", "merchant"].edge_ts = torch.tensor(df_lc[EdgeTime].to_numpy(), dtype = torch.float).squeeze()
+        graph["customer", "transaction", "merchant"].edge_index = torch.tensor(df_lc[EdgeIndex].T.to_numpy(), dtype = torch.long)
+
+        return graph
+
+    def Wikipedia(self, root, days = None, percentage = None, truncate_size = None):
+        assert (days is None) or (percentage is None), "Please provide either days or percentage, but not both."
+
+        df = pd.read_csv(os.path.join(root,"wikipedia.csv"))
+        df = df.sort_values(by = "unix_time") #sorting by edge time
+
+        if days is None and percentage is None:
+                percentage = 1
+
+        if days is not None:
+            Min_Date = datetime.fromtimestamp(min(df["unix_time"]))
+            Cut_OffDate = Min_Date + timedelta(days = days)
+            Cut_OffTime = datetime.timestamp(Cut_OffDate)
+            df = df.loc[df["unix_time"] <= Cut_OffTime,:]
+            
+        elif percentage is not None:
+            df = df.iloc[:round(df.shape[0] * percentage),:]
+        if truncate_size is not None:
+            df = df.iloc[:truncate_size]
+                        
+        #   Extract necessary columns only
+        # df_lc = df.copy(deep=True) 
+        #   Customer ID
+        # df_lc["u"] = self.create_id_vector_catagorical(df_lc["cc_num"])
+        # #   Merchant ID
+        # df_lc["merchant"] = self.create_id_vector_catagorical(df_lc["merchant"])
+        # #   Gender # Male is 1 Female is Zero
+        # df_lc["gender"] = (df_lc["gender"] == "M")* 1 # times one to convert bool to int
+        # #   Turning Date of Birth into Unix Time
+        # #   Could try to make an age variable but then the node would have time changing features
+        # df_lc["dob"] = list(map(lambda x: int(date.fromisoformat(x).strftime("%s")), df_lc["dob"]))
+        # #   Edge ID
+        # df_lc["trans_num"] = self.create_id_vector_catagorical(df_lc["trans_num"])
+
+        #   Creating Graph
+        graph = HeteroData()
+        #   Customer Nodes
+        # Customerfeatures = ["cc_num","gender","dob"] #cc_num is needed to remove duplicates properly
+        graph["u"].x = torch.tensor(torch.zeros(max(df['u'])+1,), dtype=torch.float) #Iloc to not include cc_num as feature
+        #   Merchant Nodes
+        # Merchantfeatures = ["merchant","merch_lat","merch_long"]
+        # first_merchant = df_lc["merchant"].drop_duplicates().index # using the first lat and long value
+        graph["merchant"].x = torch.tensor(torch.zeros(max(df['i'])+1-max(df['u'])).to_numpy(), dtype=torch.float)
+        #   Edge 
+        EdgeIndex = ["u", "i"]
+        Edge_features = []
+        for i in range(4,len(df.columns)):
+            Edge_features.append(i)
+
+        # Edgefeatures = ["category", "amt"]
+        EdgeTime = ["ts"]
+        EdgeLabel = ["label"]
+
+        #   Convert Merhcant Category into Numeric
+        df_edgefeatures = df[Edgefeatures]
         df_edgefeatures['category'] = pd.factorize(df_edgefeatures['category'])[0]
 
         graph["customer", "transaction", "merchant"].edge_attr = torch.tensor(df_edgefeatures.to_numpy(), dtype = torch.float)
