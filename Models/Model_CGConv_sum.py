@@ -22,7 +22,11 @@ from torch_scatter import scatter
 from typing import Optional, Tuple
 
 
-sys.path.insert(0, '/workspaces/TCGConv/utils')
+HPC_Flag = True
+if HPC_Flag:
+    sys.path.insert(0, '/home/svu/e0407728/My_FYP/TCGConv/utils')
+else:
+    sys.path.insert(0, '/workspaces/TCGConv/utils')
 from util import saveModel,focal_loss,load_checkpoint
    
 
@@ -420,7 +424,8 @@ def CGConv_sum_Trainer(args,config,Train_Groups, Test_Groups):
                 # First model is the initial model, and first optimizer is initial optimizer
                 # At the end of each group, we will store the best epoch's model and optimizer that generates largest F1
                 loss = train(model=best_all_dct['model'][i], graph=train_group, optimizer = optimizer, loss_fn = loss_fn )
-                train_loss = test(args=args, model=best_all_dct['model'][i], graph=train_group, loss_fn=loss_fn, mode = 'Train', epoch = epoch)['loss']
+                train_output = test(args=args, model=best_all_dct['model'][i], graph=train_group, loss_fn=loss_fn, mode = 'Train', epoch = epoch)
+                train_loss = train_output['loss'] 
                 test_output = test(args=args, model=best_all_dct['model'][i], graph=test_group, loss_fn=loss_fn, mode = 'Test', epoch = epoch)
 
                 test_loss = test_output['loss']
