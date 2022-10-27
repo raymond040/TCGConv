@@ -50,7 +50,7 @@ class DatasetPrep(Dataset):
             data = self.Credit_Card_HeteroGraph(root=root, days=days, percentage=percentage, truncate_size = truncate_size)
         
         elif dataset_name == "W" or "R":
-            data = self.WikiReddit(root=root, days=days, percentage=percentage, truncate_size = truncate_size, type=type)
+            data = self.WikiReddit(root=root, days=days, percentage=percentage, truncate_size = truncate_size, type=dataset_name)
         else:
             raise Exception("Dataset_name is invalid, only MOOC and CC are supported.")
 
