@@ -17,11 +17,14 @@ class DatasetPrep(Dataset):
     Call this function by  `dataset = DatasetPrep(dataset_name, root, type, num_slice, days or percentage)`
     
     Parameters:
-    * dataset_name (str): "MOOC" or "CC" or "YC" or "MS"
+    * dataset_name (str): "MOOC" or "CC" or "YC" or "MS" or "W" or "R"
                     MOOC dataset contains ~ 30 days of user actions.
                     CC dataset contains ~ two years of transactions.
                     YC dataset contains ~  30 days of reviews
                     MS dataset contains ~ 2350 days of actions wrt a post
+                    W dataset contains ~  30 days of interactions of users and wikipedia pages
+                    R dataset contains ~  30 days of interactions of users and reddit threads
+
     * root (str): string with filepath where the dataset is stored in your computer
     * type (str):   G - simply the graph
                     CG - Conjugate_graph approach: edge_ts information is in ts for the nodes. 
@@ -45,6 +48,9 @@ class DatasetPrep(Dataset):
 
         elif dataset_name == "CC":
             data = self.Credit_Card_HeteroGraph(root=root, days=days, percentage=percentage, truncate_size = truncate_size)
+        
+        elif dataset_name == "W" or "R":
+            data = self.WikiReddit(root=root, days=days, percentage=percentage, truncate_size = truncate_size, type=type)
         else:
             raise Exception("Dataset_name is invalid, only MOOC and CC are supported.")
 
@@ -275,11 +281,15 @@ class DatasetPrep(Dataset):
 
         return graph
 
-    def Wikipedia(self, root, days = None, percentage = None, truncate_size = None):
+    def WikiReddit(self, root, days = None, percentage = None, truncate_size = None, type="W"):
         assert (days is None) or (percentage is None), "Please provide either days or percentage, but not both."
 
-        df = pd.read_csv(os.path.join(root,"wikipedia.csv"))
-        df = df.sort_values(by = "unix_time") #sorting by edge time
+        if type =="W":
+            df = pd.read_csv(os.path.join(root,"wikipedia.csv"))
+        else:
+            df = pd.read_csv(os.path.join(root,"reddit.csv"))
+
+        # df = df.sort_values(by = "unix_time") #already sorted
 
         if days is None and percentage is None:
                 percentage = 1
@@ -317,24 +327,21 @@ class DatasetPrep(Dataset):
         #   Merchant Nodes
         # Merchantfeatures = ["merchant","merch_lat","merch_long"]
         # first_merchant = df_lc["merchant"].drop_duplicates().index # using the first lat and long value
-        graph["merchant"].x = torch.tensor(torch.zeros(max(df['i'])+1-max(df['u'])).to_numpy(), dtype=torch.float)
+        graph["i"].x = torch.tensor(torch.zeros(max(df['i'])+1-max(df['u'])).to_numpy(), dtype=torch.float)
         #   Edge 
         EdgeIndex = ["u", "i"]
         Edge_features = []
         for i in range(4,len(df.columns)):
-            Edge_features.append(i)
+            Edge_features.append(df.columns[i])
 
         # Edgefeatures = ["category", "amt"]
         EdgeTime = ["ts"]
         EdgeLabel = ["label"]
 
-        #   Convert Merhcant Category into Numeric
-        df_edgefeatures = df[Edgefeatures]
-        df_edgefeatures['category'] = pd.factorize(df_edgefeatures['category'])[0]
-
-        graph["customer", "transaction", "merchant"].edge_attr = torch.tensor(df_edgefeatures.to_numpy(), dtype = torch.float)
-        graph["customer", "transaction", "merchant"].edge_label = torch.tensor(df_lc[EdgeLabel].to_numpy(), dtype = torch.long).squeeze()
-        graph["customer", "transaction", "merchant"].edge_ts = torch.tensor(df_lc[EdgeTime].to_numpy(), dtype = torch.float).squeeze()
-        graph["customer", "transaction", "merchant"].edge_index = torch.tensor(df_lc[EdgeIndex].T.to_numpy(), dtype = torch.long)
+        # df_edgefeatures['category'] = pd.factorize(df_edgefeatures['category'])[0]
+        graph["u", "int", "i"].edge_attr = torch.tensor(df[Edge_features].to_numpy(), dtype = torch.float)
+        graph["u", "int", "i"].edge_label = torch.tensor(df[EdgeLabel].to_numpy(), dtype = torch.long).squeeze()
+        graph["u", "int", "i"].edge_ts = torch.tensor(df[EdgeTime].to_numpy(), dtype = torch.float).squeeze()
+        graph["u", "int", "i"].edge_index = torch.tensor(df[EdgeIndex].T.to_numpy(), dtype = torch.long)
 
         return graph

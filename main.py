@@ -37,10 +37,15 @@ def main():
             "weight_decay": args.weight_decay,
         }
     
+    #if using HPC, specify the root.
     if args.dataset_name =="CC":
         args.root_readData = args.root+"Dataset/Credit_Card_Fraud"
     elif args.dataset_name == "MOOC":
         args.root_readData = args.root+"Dataset/MOOC"
+    elif args.dataset_name == "W":
+        args.root_readData = args.root+"Dataset/Wikipedia"
+    elif args.dataset_name == "R":
+        args.root_readData = args.root+"Dataset/Reddit"
     else:
         raise Exception("Unknown dataset_name")
 
