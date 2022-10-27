@@ -37,7 +37,7 @@ class GNNEncoder(torch.nn.Module):
                 x = conv(x, edge_index)
             else:
                 x = conv(x, edge_index).relu()
-            count += 1
+            count = count + 1
         return x
 class EdgeDecoder(torch.nn.Module):
     def __init__(self, hidden_channels, nodetypes, dropout):

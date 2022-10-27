@@ -159,11 +159,11 @@ class TemporalGCNConv(MessagePassing):
             # Selecting eligible edges and perform propogation
             eligible_edge_mask = (node_ts[fromnode]<=node_ts[tonode]).reshape((-1,)) 
             out = self.propagate(edge_index[:,eligible_edge_mask], x=x, norm=norm, node_ts = node_ts) 
-            out += self.bias
+            output = out + self.bias
 
             # Store the output
-            outout.append(out)
-            count+=1
+            outout.append(output)
+            count = count + 1
 
         return sum(outout)/count  # averaging all results
 
@@ -448,7 +448,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 optimizer.load_state_dict(best_all_dct['optimizer_dict'][-1])
                 saveModel(args, best_all_dct['model'][-1],optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
 
-            i += 1
+            i = i + 1
 
         # print average results and time for the whole training
         print("Finished training!")

@@ -449,7 +449,7 @@ def CGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 optimizer.load_state_dict(best_all_dct['optimizer_dict'][-1])
                 saveModel(args, best_all_dct['model'][-1],optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
 
-            i += 1
+            i = i + 1
 
         # print average results and time for the whole training
         print("Finished training!")
