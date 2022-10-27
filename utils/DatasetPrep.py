@@ -94,7 +94,7 @@ class DatasetPrep(Dataset):
             hyper_data[relationship, sink, relationship].edge_index = torch.tensor([action_df['src_node'].tolist(),action_df['dst_node'].tolist()],dtype=torch.long)
             hyper_data[relationship, source, relationship].edge_index = torch.tensor([rev_action_df['src_node'].tolist(),rev_action_df['dst_node'].tolist()],dtype=torch.long)
             
-            if dataset_name=="CC":
+            if dataset_name in ["CC","W","R"]:
                 # Create Sink Edge Features
                 hyper_sink = hyper_data[relationship, sink, relationship].edge_index[0] 
                 sink_index = data[source, relationship, sink].edge_index[1] 
@@ -323,11 +323,11 @@ class DatasetPrep(Dataset):
         graph = HeteroData()
         #   Customer Nodes
         # Customerfeatures = ["cc_num","gender","dob"] #cc_num is needed to remove duplicates properly
-        graph["u"].x = torch.tensor(torch.zeros(max(df['u'])+1,), dtype=torch.float) #Iloc to not include cc_num as feature
+        graph["u"].x = torch.arange(0, max(df['u'])+1,dtype=torch.float32).reshape(-1,1)
         #   Merchant Nodes
         # Merchantfeatures = ["merchant","merch_lat","merch_long"]
         # first_merchant = df_lc["merchant"].drop_duplicates().index # using the first lat and long value
-        graph["i"].x = torch.tensor(torch.zeros(max(df['i'])+1-max(df['u'])).to_numpy(), dtype=torch.float)
+        graph["i"].x = torch.arange(0, max(df['i'])+1,dtype=torch.float32).reshape(-1,1)
         #   Edge 
         EdgeIndex = ["u", "i"]
         Edge_features = []
