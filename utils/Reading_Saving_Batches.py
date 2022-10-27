@@ -1,6 +1,10 @@
 #%%  Set Up
 import sys
-sys.path.insert(0, '/workspaces/TCGConv/utils')
+HPC_Flag = True
+if HPC_Flag:
+    sys.path.insert(0, '/home/svu/e0407728/My_FYP/TCGConv/utils')
+else:
+    sys.path.insert(0, '/workspaces/TCGConv/utils')
 from CGT import CGT
 from utils.DatasetPrepOri import DatasetPrep
 from TimeHorizon import Time_Batches

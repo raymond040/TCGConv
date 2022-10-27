@@ -3,14 +3,21 @@ import sys
 import copy
 import torch_geometric.transforms as T
 
-sys.path.insert(0, '/workspaces/TCGConv/utils')
+HPC_Flag = True
+if HPC_Flag:
+    sys.path.insert(0, '/home/svu/e0407728/My_FYP/TCGConv/utils')
+else:
+    sys.path.insert(0, '/workspaces/TCGConv/utils')
 from util import setup_device,setup_seed,clean
 from config import parse_args
 from DatasetPrep import DatasetPrep
 from TimeHorizon import Time_Groups
 from CGT import CGT
 from ATN import allnodes
-sys.path.insert(0, '/workspaces/TCGConv/Models')
+if HPC_Flag:
+    sys.path.insert(0, '/home/svu/e0407728/My_FYP/TCGConv/Models')
+else:
+    sys.path.insert(0, '/workspaces/TCGConv/Models')
 from Model_CONCAT import CONCAT_Trainer
 from Model_ATN import ATN_Trainer
 from Model_TCGConv import TCGConv_Trainer
