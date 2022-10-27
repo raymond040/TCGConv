@@ -5,7 +5,7 @@ u_list, i_list, ts_list, label_list = [], [], [], []
 feat_l = []
 idx_list = []
 
-with open('reddit.csv') as f:
+with open('/home/svu/e0407728/My_FYP/TCGConv/Dataset/Reddit/reddit.csv') as f:
     s = next(f)
     for idx, line in enumerate(f): #index, line per line reading
         e = line.strip().split(',')
@@ -39,4 +39,4 @@ for i in range(feature_cnt):
             df_dct['feat_'+str(i)] = [feat_l[j][i]]
 df = pd.DataFrame(df_dct)
 df['i'] = df['i']+max(df['u'])
-df.to_csv('reddit_processed.csv')
+df.to_csv('/home/svu/e0407728/My_FYP/TCGConv/Dataset/Reddit/reddit_processed.csv')
