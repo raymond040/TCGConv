@@ -178,7 +178,7 @@ def CONCAT_Trainer(args,config,Train_Groups, Test_Groups):
             train_batch[relationship].edge_label_index = train_batch[relationship].edge_index
             
             print ('=========================================================')
-            print ('This is batch: ' + str(batch))
+            print ('This is group: ' + str(batch))
             best_each_batch_dct = {
                 'AP':0,
                 'P':0,
@@ -253,3 +253,4 @@ def CONCAT_Trainer(args,config,Train_Groups, Test_Groups):
         avg_P = df['P'].mean()
         avg_R = df['R'].mean()
         print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
+    return avg_AP,avg_F1,avg_P,avg_R

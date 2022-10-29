@@ -153,7 +153,7 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
             train_batch = Train_Groups[i].to(args.device)    
 
             print ('=========================================================')
-            print ('This is batch: ' + str(i)) 
+            print ('This is group: ' + str(i)) 
 
             best_each_batch_dct = {
                 'AP':-1,
@@ -228,3 +228,4 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
         avg_P = df['P'].mean()
         avg_R = df['R'].mean()
         print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
+    return avg_AP,avg_F1,avg_P,avg_R
