@@ -253,9 +253,9 @@ def test(args, model, graph, loss_fn, mode, epoch):
 
     if torch.isnan(AP).item(): # use f1 as proxy if AP is NAN
         print("WARNING: AP is NAN, use F1 instead")
-        AP = F1_Score(preds=preds, target=labels).to(args.device)
+        AP = F1_Score(preds=preds_ArgMax, target=labels).to(args.device)
 
-    F1 = F1_Score(preds=preds, target=labels)[1]
+    F1 = F1_Score(preds=preds_ArgMax, target=labels)[1]
 
     accuracy = (confmat[0][0] + confmat[1][1]) / torch.sum(confmat)
     recall = confmat[1][1] / (confmat[1][1] + confmat[1][0])
