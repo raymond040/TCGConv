@@ -51,10 +51,10 @@ def main():
         0 : uniform(0.005*9,0.005*10)
     }
 
-    print(args.seed)
-    atune = (int(args.seed[6]))
+    print(args.num_version)
+    atune = (int(args.num_version[6]))
     print(atune)
-    print(args.seed) 
+    #print(args.seed) 
     config = {
             "alpha": alpha_dct[atune],
             "gamma": 2,
