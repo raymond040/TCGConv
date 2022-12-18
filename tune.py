@@ -38,9 +38,21 @@ def main():
     setup_device(args)
     args.csvPath = os.path.join(args.root, 'Results/'+args.dataset_name+'/'+args.model_type+'_'+args.dataset_name+'_'+args.type_ED+'_'+str(args.num_version)+'.csv')
     args.modelPath = os.path.join(args.root, 'Results/'+args.dataset_name+'/'+args.model_type+'_'+args.dataset_name+'_'+args.type_ED+'_'+str(args.num_version)+'.pth')
+    alpha_dct = {
+        1 : uniform(0.005*0,0.005*1),
+        2 : uniform(0.005*1,0.005*2),
+        3 : uniform(0.005*2,0.005*3),
+        4 : uniform(0.005*3,0.005*4),
+        5 : uniform(0.005*4,0.005*5),
+        6 : uniform(0.005*5,0.005*6),
+        7 : uniform(0.005*6,0.005*7),
+        8 : uniform(0.005*7,0.005*8),
+        9 : uniform(0.005*8,0.005*9),
+        10 : uniform(0.005*9,0.005*10)
+    }
 
     config = {
-            "alpha": uniform(0,0.05),
+            "alpha": alpha_dct[args.atune],
             "gamma": choice([2,3]),
             "lr": loguniform.rvs(1e-8,1e-2).item(),
             "hidden_chnl": choice([32,64]),

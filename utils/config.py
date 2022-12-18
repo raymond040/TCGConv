@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument('--dropout', type=float, default=0.2, help='dropout ratio')
     parser.add_argument('--num_layers', type=int, default=3, help='number of GCN layers')
     parser.add_argument('--n_run', type=int, default=10, help='number of run for hyperparameter tuning')
+    parser.add_argument('--atune', type=int, default=1, help='alpha tuning variation')
     # parser.add_argument('--hpc', type=int, default=1, help='whether to use HPC (==1) or not (==0)')
 
     # ========================== HyperTune Parameters =============================
