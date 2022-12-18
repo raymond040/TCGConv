@@ -50,9 +50,10 @@ def main():
         9 : uniform(0.005*8,0.005*9),
         10 : uniform(0.005*9,0.005*10)
     }
-
+    
+    atune = (int(args.seed[7])) 
     config = {
-            "alpha": alpha_dct[args.atune],
+            "alpha": alpha_dct[atune],
             "gamma": 2,
             "lr": 1e-4,
             "hidden_chnl": 32,
