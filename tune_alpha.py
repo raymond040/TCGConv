@@ -56,7 +56,7 @@ def main():
     print(atune)
     #print(args.seed) 
     config = {
-            "alpha": alpha_dct[atune],
+            "alpha": alpha_dct[1]/1000,
             "gamma": 2,
             "lr": 1e-4,
             "hidden_chnl": 32,
