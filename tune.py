@@ -52,7 +52,7 @@ def main():
     }
 
     config = {
-            "alpha": alpha_dct[args.atune],
+            "alpha": uniform(0,0.015),
             "gamma": choice([2,3]),
             "lr": loguniform.rvs(1e-8,1e-2).item(),
             "hidden_chnl": choice([32,64]),
