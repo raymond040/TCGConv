@@ -22,7 +22,7 @@ from torch_scatter import scatter
 from typing import Optional, Tuple
 
 
-HPC_Flag = True
+HPC_Flag = False
 if HPC_Flag:
     sys.path.insert(0, '/home/svu/e0407728/My_FYP/TCGConv/utils')
 else:
@@ -251,6 +251,10 @@ def test(args, model, graph, loss_fn, mode, epoch):
 
     F1_Score = torchmetrics.F1Score(num_classes=2, average=None).to(args.device)
 
+    AUROC = torchmetrics.AUROC(num_classes=2).to(args.device)
+
+    AUROC_score = AUROC(preds=preds, target=labels).to(args.device)
+
     if torch.isnan(AP).item(): # use f1 as proxy if AP is NAN
         print("WARNING: AP is NAN, use F1 instead")
         AP = F1_Score(preds=preds_ArgMax, target=labels).to(args.device)
@@ -267,6 +271,7 @@ def test(args, model, graph, loss_fn, mode, epoch):
     output['F1'] = F1.item()
     output['loss'] = loss.item()
     output['conf'] = confmat
+    output['AUROC'] = AUROC_score.item()
 
     if epoch % args.num_epochs_print == 0:
         print(mode+"_loss:", round(loss.item(),4))
@@ -275,6 +280,7 @@ def test(args, model, graph, loss_fn, mode, epoch):
         print(mode+"_precision", round(precision.item(),4))
         print(mode+"_AP", round(AP.item(),4))
         print(mode+"_F1",round(F1.item(),4))
+        print(mode+"_AUROC",round(AUROC_score.item(),4))
         print(confmat)
 
     return output
@@ -323,6 +329,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                         'P':[],
                         'R':[],
                         'F1':[],
+                        'AUROC':[],
                         'model' : [model],
                         'model_loc': [],
                         'optimizer': [optimizer],
@@ -357,6 +364,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                         'P':[],
                         'R':[],
                         'F1':[],
+                        'AUROC':[],
                         'model' : [model],
                         'model_loc': [],
                         'optimizer': [optimizer],
@@ -375,6 +383,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 'AP':0,
                 'P':0,
                 'R':0,
+                'AUROC':0,
                 'conf':None,
                 'model':None,
                 'model_loc':0,
@@ -402,6 +411,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                     best_each_group_dct['AP'] = copy.deepcopy(test_output['AP'])
                     best_each_group_dct['P'] = copy.deepcopy(test_output['P'])
                     best_each_group_dct['R'] = copy.deepcopy(test_output['R'])
+                    best_each_group_dct['AUROC'] = copy.deepcopy(test_output['AUROC'])
                     best_each_group_dct['conf'] = copy.deepcopy(test_output['conf'])
                     best_each_group_dct['model'] = copy.deepcopy(model)
                     best_each_group_dct['model_loc'] = epoch
@@ -412,6 +422,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                         best_each_group_dct['AP'] = copy.deepcopy(test_output['AP'])
                         best_each_group_dct['P'] = copy.deepcopy(test_output['P'])
                         best_each_group_dct['R'] = copy.deepcopy(test_output['R'])
+                        best_each_group_dct['AUROC'] = copy.deepcopy(test_output['AUROC'])
                         best_each_group_dct['conf'] = copy.deepcopy(test_output['conf'])
                         best_each_group_dct['model'] = copy.deepcopy(model)
                         best_each_group_dct['model_loc'] = epoch
@@ -431,12 +442,13 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
             best_all_dct['P'].append(best_each_group_dct['P'])
             best_all_dct['R'].append(best_each_group_dct['R'])
             best_all_dct['F1'].append(best_each_group_dct['F1'])
+            best_all_dct['AUROC'].append(best_each_group_dct['AUROC'])
             best_all_dct['model'].append(copy.deepcopy(best_each_group_dct['model']))
             best_all_dct['optimizer_dict'].append(copy.deepcopy(best_each_group_dct['optimizer_dict']))
             best_all_dct['model_loc'].append(best_each_group_dct['model_loc'])
 
             # write best results per group in csv instead of write them all when all groups are finished!
-            df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','model_loc') if k in best_all_dct})
+            df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
             df.to_csv(args.csvPath, index=False, header=True)
 
             # print time per group
@@ -454,7 +466,8 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
         print("Finished training!")
         avg_AP = df['AP'].mean()
         avg_F1 = df['F1'].mean()
+        avg_AUROC = df['AUROC'].mean()
         avg_P = df['P'].mean()
         avg_R = df['R'].mean()
-        print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
-    return avg_AP,avg_F1,avg_P,avg_R
+        print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f},  Average AUROC: {avg_AUROC:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
+    return avg_AP,avg_F1,avg_P,avg_R,avg_AUROC
