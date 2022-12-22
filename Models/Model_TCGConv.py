@@ -22,7 +22,7 @@ from torch_scatter import scatter
 from typing import Optional, Tuple
 
 
-HPC_Flag = False
+HPC_Flag = True
 if HPC_Flag:
     sys.path.insert(0, '/home/svu/e0407728/My_FYP/TCGConv/utils')
 else:
