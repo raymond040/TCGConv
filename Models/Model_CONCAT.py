@@ -100,6 +100,8 @@ def test(args, model, graph, loss_fn, epoch, mode = 'Train'):
     AP = torchmetrics.functional.average_precision(preds=preds, target=labels, num_classes=2, pos_label=None).to(args.device)
     F1_Score = torchmetrics.F1Score(num_classes=2,average=None)[1].to(args.device)
     F1 = F1_Score(preds2,labels)
+    AUROC = torchmetrics.AUROC(num_classes=2)
+    AUROC_score = AUROC(preds,labels)
 
     if torch.isnan(AP).item():
         #use f1 as proxy if AP is NAN
@@ -113,6 +115,7 @@ def test(args, model, graph, loss_fn, epoch, mode = 'Train'):
     precision = confmat[1][1] / (confmat[1][1] + confmat[0][1])
 
     output['AP'] = AP.item()
+    output['AUROC'] = AUROC_score.item()
     output['R'] = recall.item()
     output['P'] = precision.item()
     output['F1'] = F1.item()
@@ -125,6 +128,7 @@ def test(args, model, graph, loss_fn, epoch, mode = 'Train'):
         print(mode+"_precision", round(precision.item(),4))
         print(mode+"_AP", round(AP.item(),4))
         print(mode+"_F1",round(F1.item(),4))
+        print(mode+"_AUROC",round(AUROC_score.item(),4))
         print(confmat)
 
     return output
@@ -143,9 +147,9 @@ def CONCAT_Trainer(args,config,Train_Groups, Test_Groups):
         optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay']) 
         filename = os.path.join(args.root,'Results/'+args.dataset_name+'/'+args.model_type+'_pretrained.pth')
         model,optimizer = load_checkpoint(args,filename, model, optimizer)
-        test_batch = T.ToUndirected()(Train_Groups[args.num_groups-1])
-        test_batch[relationship].edge_label_index = test_batch[relationship].edge_index
-        _ = test(args = args, model = model, graph = test_batch.to(args.device), loss_fn = loss_fn, epoch = args.num_epochs_print, mode = 'Test')
+        test_group = T.ToUndirected()(Train_Groups[args.num_groups-1])
+        test_group[relationship].edge_label_index = test_group[relationship].edge_index
+        _ = test(args = args, model = model, graph = test_group.to(args.device), loss_fn = loss_fn, epoch = args.num_epochs_print, mode = 'Test')
         print("finished loading pretrained model and test for the last group")
 
     elif args.mode =='train':
@@ -157,100 +161,130 @@ def CONCAT_Trainer(args,config,Train_Groups, Test_Groups):
             'P':[],
             'R':[],
             'F1':[],
-            'model' : [model],
+            'AUROC':[],
+            #'model' : [model],
             'model_loc': [],
-            'optimizer': [optimizer],
-            'optimizer_dict': [optimizer.state_dict()],
+            #'optimizer': [optimizer],
+            #'optimizer_dict': [optimizer.state_dict()],
         }
         t0 = time.time()
-        for batch in range(args.num_groups-1):
-            t_batch = time.time()
+        for group in range(args.num_groups-1):
+            t_group = time.time()
             
             # different test data per experimental design 
             if Test_Groups is None:
-                test_batch = T.ToUndirected()(Train_Groups[batch+1])
-                test_batch[relationship].edge_label_index = test_batch[relationship].edge_index
+                test_group = T.ToUndirected()(Train_Groups[group+1]).to(args.device)
+                test_group[relationship].edge_label_index = test_group[relationship].edge_index
             else:
-                test_batch = Test_Groups[batch]
-                test_batch = T.ToUndirected()(test_batch)
-                test_batch[relationship].edge_label_index = test_batch[relationship].edge_index
-            train_batch = T.ToUndirected()(Train_Groups[batch])
-            train_batch[relationship].edge_label_index = train_batch[relationship].edge_index
+                test_group = Test_Groups[group].to(args.device)
+                test_group = T.ToUndirected()(test_group).to(args.device)
+                test_group[relationship].edge_label_index = test_group[relationship].edge_index
+            train_group = T.ToUndirected()(Train_Groups[group]).to(args.device)
+            train_group[relationship].edge_label_index = train_group[relationship].edge_index
             
             print ('=========================================================')
-            print ('This is group: ' + str(batch))
-            best_each_batch_dct = {
-                'AP':0,
-                'P':0,
-                'R':0,
-                'F1':0,
+            print ('This is group: ' + str(group))
+            best_each_group_dct = {
+                'AP':-1,
+                'P':-1,
+                'R':-1,
+                'F1':-1,
+                'AUROC':-1,
                 'model':None,
                 'model_loc': 0,
                 'optimizer': None,
                 'optimizer_dict':None
             }
-            optimizer = torch.optim.Adam(best_all_dct['model'][batch].parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
-            optimizer.load_state_dict(best_all_dct['optimizer_dict'][batch])
+            optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
+            optimizer.load_state_dict(optimizer.state_dict())
 
             for epoch in range(1,args.num_epochs+1):
                 t_epoch = time.time()
 
                 # First model is the initial model, and first optimizer is initial optimizer
-                # At the end of each batch, we will store the best epoch's model and optimizer that generates largest F1
-                loss = train(model = best_all_dct['model'][batch], graph = train_batch.to(args.device), optimizer = optimizer, loss_fn = loss_fn )
-                train_output = test(args = args, model = best_all_dct['model'][batch], graph = train_batch.to(args.device), loss_fn=loss_fn, epoch = epoch, mode = 'Train')
+                # At the end of each group, we will store the best epoch's model and optimizer that generates largest F1
+                loss = train(model = best_all_dct['model'][group], graph = train_group.to(args.device), optimizer = optimizer, loss_fn = loss_fn )
+                train_output = test(args = args, model = best_all_dct['model'][group], graph = train_group.to(args.device), loss_fn=loss_fn, epoch = epoch, mode = 'Train')
                 train_loss = train_output['loss']
-                test_output = test(args = args, model = best_all_dct['model'][batch], graph = test_batch.to(args.device), loss_fn = loss_fn, epoch = epoch, mode = 'Test')
+                test_output = test(args = args, model = best_all_dct['model'][group], graph = test_group.to(args.device), loss_fn = loss_fn, epoch = epoch, mode = 'Test')
                 test_loss = test_output['loss']
                 current_epoch_f1 = test_output['F1']
 
-                if current_epoch_f1 > best_each_batch_dct['F1']:
-                    best_each_batch_dct['AP'] = test_output['AP']
-                    best_each_batch_dct['P'] = test_output['P']
-                    best_each_batch_dct['R'] = test_output['R']
-                    best_each_batch_dct['F1'] = current_epoch_f1
-                    best_each_batch_dct['model'] = copy.deepcopy(model)
-                    best_each_batch_dct['model_loc'] = epoch
-                    best_each_batch_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
+                if ((current_epoch_f1 > best_each_group_dct['F1']) or (current_epoch_f1 == best_each_group_dct['F1'] and best_each_group_dct['AP'] < test_output['AP'])):
+                    best_each_group_dct['AP'] = test_output['AP']
+                    best_each_group_dct['P'] = test_output['P']
+                    best_each_group_dct['R'] = test_output['R']
+                    best_each_group_dct['AUROC'] = test_output['AUROC']
+                    best_each_group_dct['F1'] = current_epoch_f1
+                    best_each_group_dct['model'] = copy.deepcopy(model)
+                    best_each_group_dct['model_loc'] = epoch
+                    best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
                 if epoch % args.num_epochs_print == 0:
                     print(f'Epoch: {epoch:03d}, Loss: {loss:.6f}, Train: {train_loss:.6f}, Test: {test_loss:.6f}, Time per epoch: {(time.time() - t_epoch):.4f}')
-                if epoch == args.num_epochs:
-                    if best_each_batch_dct['model'] == None:
-                        print('WARNING: Current batch has ALL 0 F1 and AP (Model = None Type), pass current model to next batch')
-                        best_each_batch_dct['model'] = copy.deepcopy(best_all_dct['model'][batch])
-                        best_each_batch_dct['optimizer_dict'] = copy.deepcopy(best_all_dct['optimizer_dict'][batch])  
+                # if epoch == args.num_epochs:
+                #     if best_each_group_dct['model'] == None:
+                #         print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
+                #         best_each_group_dct['model'] = copy.deepcopy(best_all_dct['model'][group])
+                #         best_each_group_dct['optimizer_dict'] = copy.deepcopy(best_all_dct['optimizer_dict'][group])  
+                if epoch == args.num_epochs:   
+                    if best_each_group_dct['model'] == None:
+                        print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
+                        best_each_group_dct['model'] = copy.deepcopy(model)
+                        best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
 
+              #################### finish iteration for all epochs #################  
+            #Passing the model and optimizer to the next group
+            model = best_each_group_dct['model'].to(args.device)
+            opt_state_dict = best_each_group_dct['opt_state_dict']
+            optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
+            optimizer.load_state_dict(opt_state_dict)
 
-            best_all_dct['AP'].append(best_each_batch_dct['AP'])
-            best_all_dct['P'].append(best_each_batch_dct['P'])
-            best_all_dct['R'].append(best_each_batch_dct['R'])
-            best_all_dct['F1'].append(best_each_batch_dct['F1'])
-            best_all_dct['model'].append(copy.deepcopy(best_each_batch_dct['model']))
-            best_all_dct['optimizer_dict'].append(copy.deepcopy(best_each_batch_dct['optimizer_dict']))
-            best_all_dct['model_loc'].append(best_each_batch_dct['model_loc'])
+            best_all_dct['AP'].append(best_each_group_dct['AP'])
+            best_all_dct['P'].append(best_each_group_dct['P'])
+            best_all_dct['R'].append(best_each_group_dct['R'])
+            best_all_dct['F1'].append(best_each_group_dct['F1'])
+            best_all_dct['AUROC'].append(best_each_group_dct['AUROC'])
+            # best_all_dct['model'].append(copy.deepcopy(best_each_group_dct['model']))
+            # best_all_dct['optimizer_dict'].append(copy.deepcopy(best_each_group_dct['optimizer_dict']))
+            best_all_dct['model_loc'].append(best_each_group_dct['model_loc'])
 
-            if batch > 2:
-                best_all_dct['model'][batch-2] = None
-                best_all_dct['optimizer_dict'][batch-2] = None
+            # if group > 2:
+            #     best_all_dct['model'][group-2] = None
+            #     best_all_dct['optimizer_dict'][group-2] = None
 
-            # write best results per batch in csv instead of write them all when all groups are finished!
-            df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','model_loc') if k in best_all_dct})
-            df.to_csv(args.csvPath, index=False, header=True)
+            # print time per group
+            print (f'Time per group: {(time.time()-t_group):.4f}')
 
-            # print time per batch
-            print (f'Time per batch: {(time.time()-t_batch):.4f}')
-
-            # for last batch, save model
-            if batch == args.num_groups - 2:
-                optimizer = torch.optim.Adam(best_all_dct['model'][-1].parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
-                optimizer.load_state_dict(best_all_dct['optimizer_dict'][-1])
-                saveModel(args, best_all_dct['model'][-1],optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
+            # for last group, save model
+            if group == args.num_groups - 2:
+                final_model = best_each_group_dct['model'].to(args.device)
+                final_opt_dict = best_each_group_dct['optimizer_dict']
+                optimizer = torch.optim.Adam(final_model.parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
+                optimizer.load_state_dict(final_opt_dict)
+                saveModel(args, final_model,optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
 
         # print average results and time for the whole training
         print("Finished training!")
+        # write best results per group in csv instead of write them all when all groups are finished!
+        df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
+        # df.to_csv(args.csvPath, index=False, header=True)
         avg_AP = df['AP'].mean()
         avg_F1 = df['F1'].mean()
+        avg_AUROC = df['AUROC'].mean()
         avg_P = df['P'].mean()
         avg_R = df['R'].mean()
-        print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
-    return avg_AP,avg_F1,avg_P,avg_R
+
+        avg_row = {
+            'AP':avg_AP,
+            'P':avg_P,
+            'R':avg_R,
+            'F1': avg_F1,
+            'AUROC': avg_AUROC,
+            'model_loc': df['model_loc'].mean()
+        }  
+        
+        df2 = df.append(avg_row,ignore_index=True)
+        df2.to_csv(args.csvPath, index=False, header=True)
+
+        print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f},  Average AUROC: {avg_AUROC:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
+    return avg_AP,avg_F1,avg_P,avg_R,avg_AUROC

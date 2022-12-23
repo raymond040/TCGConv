@@ -84,6 +84,13 @@ def test(args, model, graph, loss_fn, epoch,  mode = 'Train'):
     f1 = F1Score(num_classes = 2, average = 'none').to(args.device)
     auroc = AUROC(num_classes = 2).to(args.device)
 
+    if torch.isnan(AP).item():
+        #use f1 as proxy if AP is NAN
+        print("WARNING: AP is NAN, use F1 instead")
+        F1_Score = torchmetrics.F1Score(num_classes=2,average=None)[1].to(args.device)
+        AP = F1_Score(argMaxPred,labels)
+        # raise Exception("AP is NAN, no positive samples")
+
     # For computing evaluation scores
     apScore = average_precision(softMaxPred, labels)
     precisionScore = precision(argMaxPred, labels)
@@ -190,7 +197,7 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
                     best_each_group_dct['P'] = test_output['P']
                     best_each_group_dct['R'] = test_output['R']
                     best_each_group_dct['F1'] = current_epoch_f1
-                    best_each_group_dct['R'] = test_output['AUROC']
+                    best_each_group_dct['AUROC'] = test_output['AUROC']
                     best_each_group_dct['model'] = copy.deepcopy(model)
                     best_each_group_dct['model_loc'] = epoch
                     best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
@@ -227,7 +234,7 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
             best_all_dct['model_loc'].append(best_each_group_dct['model_loc'])
 
             # print time per batch
-            print (f'Time per batch: {(time.time()-t_batch):.4f}')
+            print (f'Time per group: {(time.time()-t_batch):.4f}')
 
             # for last batch, save model
             if i == args.num_groups - 2:
@@ -241,7 +248,7 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
         print("Finished training!")
         # write best results per i in csv instead of write them all when all groups are finished!
         df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
-        df.to_csv(args.csvPath, index=False, header=True)
+        # df.to_csv(args.csvPath, index=False, header=True)
         avg_AP = df['AP'].mean()
         avg_F1 = df['F1'].mean()
         avg_AUROC = df['AUROC'].mean()
