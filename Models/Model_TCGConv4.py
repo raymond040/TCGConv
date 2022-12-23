@@ -468,7 +468,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 final_opt_dict = best_each_group_dct['optimizer_dict']
                 optimizer = torch.optim.Adam(final_model.parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
                 optimizer.load_state_dict(final_opt_dict)
-                saveModel(args, best_all_dct['model'][-1],optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
+                saveModel(args, final_model,optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
 
             i = i + 1
 

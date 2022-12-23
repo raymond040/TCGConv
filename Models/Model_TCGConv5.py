@@ -135,9 +135,7 @@ class TemporalGCNConv(MessagePassing):
         self.bias = Parameter(torch.Tensor(out_channels))
         self.lstm_aggr = LSTMAggregation(in_channels,out_channels)
         self.reset_parameters()
-        # self.aggregators = ['sum']#, 'mean', 'min', 'max', 'var', 'std']
-        # self.scalers = ['identity']#, 'amplification', 'attenuation', 'linear', 'inverse_linear']
-        
+
         #NO self.agg and self.scalers
 
     def reset_parameters(self): 
@@ -201,9 +199,9 @@ class TemporalGCNConv(MessagePassing):
         specified in :meth:`__init__` by the :obj:`aggr` argument.
         """
         # Sort based on from_node timestamp 
-        # node_ts_j, indices_sorted_based_on_from_node_time_column = node_ts_j.squeeze().sort(dim=-1,descending=False, stable=True)
-        # inputs = inputs[indices_sorted_based_on_from_node_time_column]
-        # index = index[indices_sorted_based_on_from_node_time_column]
+        node_ts_j, indices_sorted_based_on_from_node_time_column = node_ts_j.squeeze().sort(dim=-1,descending=False, stable=True)
+        inputs = inputs[indices_sorted_based_on_from_node_time_column]
+        index = index[indices_sorted_based_on_from_node_time_column]
         ## DONT HAVE THE ABOVE ^^ but this is to make the model robust to time stamp sorting 
 
         # Sort based on to_node because we assume each node has been sorted by time. so this input is eligible for LSTM
@@ -341,10 +339,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                         'R':[],
                         'F1':[],
                         'AUROC':[],
-                        #'model' : [model],
                         'model_loc': [],
-                        #'optimizer': [optimizer],
-                        #'optimizer_dict': [optimizer.state_dict()],
                     }
 
                 elif i == args.num_groups - 1: #num batches
@@ -379,10 +374,7 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                         'R':[],
                         'F1':[],
                         'AUROC':[],
-                        #'model' : [model],
                         'model_loc': [],
-                        #'optimizer': [optimizer],
-                        #'optimizer_dict': [optimizer.state_dict()],
                     }
                 elif i == args.num_groups - 1:
                     break
@@ -449,11 +441,18 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 if epoch % args.num_epochs_print == 0:
                     print(f'Epoch: {epoch:03d}, Loss: {loss:.6f}, Train: {train_loss:.6f}, Test: {test_loss:.6f}, Time per epoch: {(time.time() - t_epoch):.4f}')
                 # SAME
-                if epoch == args.num_epochs:
+                if epoch == args.num_epochs:   
                     if best_each_group_dct['model'] == None:
                         print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
-                        best_each_group_dct['model'] = copy.deepcopy(best_all_dct['model'][i])
-                        best_each_group_dct['optimizer_dict'] = copy.deepcopy(best_all_dct['optimizer_dict'][i])   
+                        best_each_group_dct['model'] = copy.deepcopy(model)
+                        best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
+
+              #################### finish iteration for all epochs #################  
+            #Passing the model and optimizer to the next group
+            model = best_each_group_dct['model'].to(args.device)
+            opt_state_dict = best_each_group_dct['opt_state_dict']
+            optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
+            optimizer.load_state_dict(opt_state_dict)
 
             ############################ Storing best results per group in big dictionary #########################
             best_all_dct['AP'].append(best_each_group_dct['AP'])
@@ -461,20 +460,18 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
             best_all_dct['R'].append(best_each_group_dct['R'])
             best_all_dct['F1'].append(best_each_group_dct['F1'])
             best_all_dct['AUROC'].append(best_each_group_dct['AUROC'])
-            #best_all_dct['model'].append(copy.deepcopy(best_each_group_dct['model']))
-            #best_all_dct['optimizer_dict'].append(copy.deepcopy(best_each_group_dct['optimizer_dict']))
             best_all_dct['model_loc'].append(best_each_group_dct['model_loc'])
             # Ver 1 does not pass model here.
             # write best results per group in csv instead of write them all when all groups are finished!
-            df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
-            df.to_csv(args.csvPath, index=False, header=True)
+            #df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
+            #df.to_csv(args.csvPath, index=False, header=True)
 
             # print time per group
             print (f'Time per group: {(time.time()-t_group):.4f}')
 
             # for last group, save model
             if i == args.num_groups - 2:
-                final_model = best_each_group_dct['model']
+                final_model = best_each_group_dct['model'].to(args.device)
                 final_opt_dict = best_each_group_dct['optimizer_dict']
                 optimizer = torch.optim.Adam(final_model.parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
                 optimizer.load_state_dict(final_opt_dict)
@@ -482,12 +479,28 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
 
             i = i + 1
 
+        df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
         # print average results and time for the whole training
+
         print("Finished training!")
         avg_AP = df['AP'].mean()
         avg_F1 = df['F1'].mean()
         avg_AUROC = df['AUROC'].mean()
         avg_P = df['P'].mean()
         avg_R = df['R'].mean()
+
+        avg_row = {
+            'AP':avg_AP,
+            'P':avg_P,
+            'R':avg_R,
+            'F1': avg_F1,
+            'AUROC': avg_AUROC,
+            'model_loc': df['model_loc'].mean()
+        }        
+
+        df2 = df.append(avg_row,ignore_index=True)
+
+        df2.to_csv(args.csvPath, index=False, header=True)
+
         print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f},  Average AUROC: {avg_AUROC:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
     return avg_AP,avg_F1,avg_P,avg_R,avg_AUROC
