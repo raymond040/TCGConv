@@ -452,7 +452,7 @@ def CGConv_Trainer(args,config,Train_Groups, Test_Groups):
               #################### finish iteration for all epochs #################  
             #Passing the model and optimizer to the next group
             model = best_each_group_dct['model'].to(args.device)
-            opt_state_dict = best_each_group_dct['opt_state_dict']
+            opt_state_dict = best_each_group_dct['optimizer_dict']
             optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
             optimizer.load_state_dict(opt_state_dict)
 

@@ -452,8 +452,8 @@ def TCGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 if epoch == args.num_epochs:
                     if best_each_group_dct['model'] == None:
                         print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
-                        best_each_group_dct['model'] = copy.deepcopy(best_all_dct['model'][i])
-                        best_each_group_dct['optimizer_dict'] = copy.deepcopy(best_all_dct['optimizer_dict'][i])   
+                        best_each_group_dct['model'] = copy.deepcopy(model)
+                        best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
 
             ############################ Storing best results per group in big dictionary #########################
             best_all_dct['AP'].append(best_each_group_dct['AP'])
