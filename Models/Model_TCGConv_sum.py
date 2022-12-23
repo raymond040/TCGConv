@@ -84,10 +84,6 @@ class LSTMAggregation(Aggregation):
         super().__init__()
         self.lin_dict = torch.nn.ModuleDict()
         self.lin = Linear(in_channels, out_channels, bias=False)
-        self.bias = Parameter(torch.Tensor(out_channels))
-        self.aggregators = ['sum']#, 'mean', 'min', 'max', 'var', 'std']
-        self.scalers = ['identity']#, 'amplification', 'attenuation', 'linear', 'inverse_linear']
-
         self.lstm = LSTM(in_channels, out_channels, batch_first=True, **kwargs) 
         self.reset_parameters() 
 
