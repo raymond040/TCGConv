@@ -203,10 +203,10 @@ def CONCAT_Trainer(args,config,Train_Groups, Test_Groups):
 
                 # First model is the initial model, and first optimizer is initial optimizer
                 # At the end of each group, we will store the best epoch's model and optimizer that generates largest F1
-                loss = train(model = best_all_dct['model'][group], graph = train_group.to(args.device), optimizer = optimizer, loss_fn = loss_fn )
-                train_output = test(args = args, model = best_all_dct['model'][group], graph = train_group.to(args.device), loss_fn=loss_fn, epoch = epoch, mode = 'Train')
+                loss = train(model = model, graph = train_group.to(args.device), optimizer = optimizer, loss_fn = loss_fn )
+                train_output = test(args = args, model = model, graph = train_group.to(args.device), loss_fn=loss_fn, epoch = epoch, mode = 'Train')
                 train_loss = train_output['loss']
-                test_output = test(args = args, model = best_all_dct['model'][group], graph = test_group.to(args.device), loss_fn = loss_fn, epoch = epoch, mode = 'Test')
+                test_output = test(args = args, model = model, graph = test_group.to(args.device), loss_fn = loss_fn, epoch = epoch, mode = 'Test')
                 test_loss = test_output['loss']
                 current_epoch_f1 = test_output['F1']
 
