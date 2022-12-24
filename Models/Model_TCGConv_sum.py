@@ -478,7 +478,7 @@ def TCGConv_sum_Trainer(args,config,Train_Groups, Test_Groups):
                     if best_each_group_dct['model'] == None:
                         print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
                         best_each_group_dct['model'] = copy.deepcopy(model)
-                        best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
+                        #best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
 
               #################### finish iteration for all epochs #################  
             #Passing the model and optimizer to the next group
