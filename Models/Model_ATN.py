@@ -184,7 +184,7 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
 
                 # First model is the initial model, and first optimizer is initial optimizer
                 # At the end of each batch, we will store the best epoch's model and optimizer that generates largest F1
-                loss = train(model = best_all_dct['model'][i], graph = train_group, optimizer = optimizer, loss_fn = loss_fn )
+                loss = train(model = model, graph = train_group, optimizer = optimizer, loss_fn = loss_fn )
                 train_output = test(args=args, model=model, graph=train_group, loss_fn=loss_fn, epoch=epoch,  mode = 'Train')
                 train_loss = train_output['loss'] 
                 test_output = test(args = args, model = model, graph = test_group, loss_fn = loss_fn, epoch = epoch, mode = 'Test')
