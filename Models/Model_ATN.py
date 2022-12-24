@@ -84,13 +84,6 @@ def test(args, model, graph, loss_fn, epoch,  mode = 'Train'):
     f1 = F1Score(num_classes = 2, average = 'none').to(args.device)
     auroc = AUROC(num_classes = 2).to(args.device)
 
-    if torch.isnan(AP).item():
-        #use f1 as proxy if AP is NAN
-        print("WARNING: AP is NAN, use F1 instead")
-        F1_Score = torchmetrics.F1Score(num_classes=2,average=None)[1].to(args.device)
-        AP = F1_Score(argMaxPred,labels)
-        # raise Exception("AP is NAN, no positive samples")
-
     # For computing evaluation scores
     apScore = average_precision(softMaxPred, labels)
     precisionScore = precision(argMaxPred, labels)
@@ -100,6 +93,14 @@ def test(args, model, graph, loss_fn, epoch,  mode = 'Train'):
     f1Score = f1(argMaxPred, labels)
     f1Score = f1Score[1:]
     aurocScore = auroc(softMaxPred, labels)
+
+    if torch.isnan(apScore).item():
+        #use f1 as proxy if AP is NAN
+        print("WARNING: AP is NAN, use F1 instead")
+        f1Score = torchmetrics.F1Score(num_classes=2,average=None)[1].to(args.device)
+        apScore = f1(argMaxPred,labels)
+        # raise Exception("AP is NAN, no positive samples")
+
     output['AP'] = apScore.item()
     output['R'] = recallScore.item()
     output['P'] = precisionScore.item()
@@ -152,6 +153,8 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
 
         t0 = time.time()
         for i in range(args.num_groups - 1):
+            none_models = False
+            none_models_lst = []
             t_batch = time.time()
 
             # different test data per experimental design 
@@ -214,13 +217,15 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
                         print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
                         best_each_group_dct['model'] = copy.deepcopy(model)
                         best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
-
+                        none_models = True
+                        none_models_lst.append(True)
               #################### finish iteration for all epochs #################  
             #Passing the model and optimizer to the next group
             model = best_each_group_dct['model'].to(args.device)
             opt_state_dict = best_each_group_dct['optimizer_dict']
             optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
-            optimizer.load_state_dict(opt_state_dict)
+            if not none_models:
+                optimizer.load_state_dict(opt_state_dict)
             
             ############################ Storing best results per group in big dictionary #########################
            
@@ -241,9 +246,9 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
                 final_model = best_each_group_dct['model'].to(args.device)
                 final_opt_dict = best_each_group_dct['optimizer_dict']
                 optimizer = torch.optim.Adam(final_model.parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
-                optimizer.load_state_dict(final_opt_dict)
+                if sum(none_models_lst) == 0:
+                    optimizer.load_state_dict(final_opt_dict)
                 saveModel(args, final_model,optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
-
         # print average results and time for the whole training
         print("Finished training!")
         # write best results per i in csv instead of write them all when all groups are finished!

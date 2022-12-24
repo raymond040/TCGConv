@@ -318,6 +318,8 @@ def CGConv_Trainer(args,config,Train_Groups, Test_Groups):
     #ver1 still uses batches
     elif args.mode =='train':
         for group1, group2 in zip(Train_Groups, Test_Groups):
+            none_models = False
+            none_models_lst = []
             t_group = time.time()
             if args.type_ED == "sub":
                 if i == 0:
@@ -448,13 +450,15 @@ def CGConv_Trainer(args,config,Train_Groups, Test_Groups):
                         print('WARNING: Current group has ALL 0 F1 and AP (Model = None Type), pass current model to next group')
                         best_each_group_dct['model'] = copy.deepcopy(model)
                         best_each_group_dct['optimizer_dict'] = copy.deepcopy(optimizer.state_dict())
-
+                        none_models = True
+                        none_models_lst.append(True)
               #################### finish iteration for all epochs #################  
             #Passing the model and optimizer to the next group
             model = best_each_group_dct['model'].to(args.device)
             opt_state_dict = best_each_group_dct['optimizer_dict']
             optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
-            optimizer.load_state_dict(opt_state_dict)
+            if not none_models:
+                optimizer.load_state_dict(opt_state_dict)
 
             ############################ Storing best results per group in big dictionary #########################
             best_all_dct['AP'].append(best_each_group_dct['AP'])
@@ -476,9 +480,9 @@ def CGConv_Trainer(args,config,Train_Groups, Test_Groups):
                 final_model = best_each_group_dct['model'].to(args.device)
                 final_opt_dict = best_each_group_dct['optimizer_dict']
                 optimizer = torch.optim.Adam(final_model.parameters(), lr=config["lr"], weight_decay=config['weight_decay'])
-                optimizer.load_state_dict(final_opt_dict)
+                if sum(none_models_lst) == 0:
+                    optimizer.load_state_dict(final_opt_dict)
                 saveModel(args, final_model,optimizer,best_all_dct['F1'][-1],best_all_dct['AP'][-1],best_all_dct['P'][-1],best_all_dct['R'][-1], args.modelPath)
-
             i = i + 1
 
         df = pd.DataFrame.from_dict({k:best_all_dct[k] for k in ('AP','P','R','F1','AUROC','model_loc') if k in best_all_dct})
