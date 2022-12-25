@@ -6,7 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def setup_device(args):
-    args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    #args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    args.device = 'cpu'
 
 def setup_seed(args):
     if args.seed[8:] == 'venus01':

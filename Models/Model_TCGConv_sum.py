@@ -489,7 +489,7 @@ def TCGConv_sum_Trainer(args,config,Train_Groups, Test_Groups):
             model = best_each_group_dct['model'].to(args.device)
             opt_state_dict = best_each_group_dct['optimizer']
             optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
-            if not none_models:
+            if none_models == False:
                 optimizer.load_state_dict(opt_state_dict)
 
             ############################ Storing best results per group in big dictionary #########################
