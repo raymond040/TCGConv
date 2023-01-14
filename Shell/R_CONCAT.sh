@@ -2,7 +2,7 @@
 #PBS -P Project
 #PBS -j oe
 #PBS -q volta_gpu
-#PBS -l select=1:ncpus=8:mem=80gb:ngpus=1
+#PBS -l select=1:ncpus=8:mem=80gb
 #PBS -l walltime=12:00:00
 
 cd #PBS_o_WORKDIR;
