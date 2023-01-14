@@ -271,6 +271,17 @@ def ATN_Trainer(args,config,Train_Groups, Test_Groups):
 
         df2 = df.append(avg_row,ignore_index=True)
 
+        param_row = {
+            'AP':'alpha= ' + str(args.alpha),
+            'P':'gamma= ' + str(args.gamma),
+            'R':'learning_rate= ' + str(args.lr),
+            'F1': 'hidden_channels=' + str(args.hidden_chnl),
+            'AUROC': 'layers= ' + str(args.num_layers),
+            'model_loc': 'dropout= ' + str(args.dropout),
+        }        
+
+        df2 = df2.append(param_row,ignore_index=True)
+
         df2.to_csv(args.csvPath, index=False, header=True)
         print(f'Average AP: {avg_AP:.4f}, Average F1: {avg_F1:.4f}, Average Precision: {avg_P:.4f},  Average AUROC: {avg_AUROC:.4f}, Average Recall: {avg_R:.4f}, Total Time: {(time.time() - t0):.4f} ')
     return avg_AP,avg_F1,avg_P,avg_R,avg_AUROC

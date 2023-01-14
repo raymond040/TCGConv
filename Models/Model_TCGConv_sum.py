@@ -487,7 +487,7 @@ def TCGConv_sum_Trainer(args,config,Train_Groups, Test_Groups):
               #################### finish iteration for all epochs #################  
             #Passing the model and optimizer to the next group
             model = best_each_group_dct['model'].to(args.device)
-            opt_state_dict = best_each_group_dct['optimizer']
+            opt_state_dict = best_each_group_dct['optimizer_dict']
             optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], weight_decay=config['weight_decay'])
             if none_models == False:
                 optimizer.load_state_dict(opt_state_dict)
@@ -534,9 +534,20 @@ def TCGConv_sum_Trainer(args,config,Train_Groups, Test_Groups):
             'F1': avg_F1,
             'AUROC': avg_AUROC,
             'model_loc': df['model_loc'].mean()
-        }        
+        }
 
         df2 = df.append(avg_row,ignore_index=True)
+
+        param_row = {
+            'AP':'alpha= ' + str(args.alpha),
+            'P':'gamma= ' + str(args.gamma),
+            'R':'learning_rate= ' + str(args.lr),
+            'F1': 'hidden_channels=' + str(args.hidden_chnl),
+            'AUROC': 'layers= ' + str(args.num_layers),
+            'model_loc': 'dropout= ' + str(args.dropout),
+        }        
+
+        df2 = df2.append(param_row,ignore_index=True)
 
         df2.to_csv(args.csvPath, index=False, header=True)
 
