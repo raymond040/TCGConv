@@ -12,6 +12,10 @@ Running the main.py script with different arguments in the command line will dic
 over epochs and over groups. The code will also print the results and the performance into a .csv file. 
 
 #### Essential Commands
+
+If you are running the models with HPC, then you should set HPCFlag = True at all of the models in the Models folder. Else you should set HPCFlag = False.
+Please edit the folder and directory to your own configuration.
+
 These commands will reproduce the model results by training a model with the same hyperparameters stated in the paper.
 
 Running CONCAT Model
