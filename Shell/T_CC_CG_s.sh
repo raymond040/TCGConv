@@ -11,5 +11,5 @@ np=$(cat ${PBS_NODEFILE} | wc -l);
 image="/home/svu/e0407728/SIF/edge-hpc_v0.1.sif"
 singularity exec -e $image bash << EOF > $PBS_JOBID.$PBS_JOBNAME.out 2> $PBS_JOBID.$PBS_JOBNAME.err
 
-python3 "/home/svu/e0407728/My_FYP/TCGConv/tune.py" --dataset_name "CC" --percentage 1 --type_ED "sub" --num_groups 100 --root "/home/svu/e0407728/My_FYP/TCGConv/" --num_version $PBS_JOBID --model_type "TCGConv" --n_run 10
+python3 "/home/svu/e0407728/My_FYP/TCGConv/tune.py" --dataset_name "CC" --percentage 1 --type_ED "sub" --num_groups 100 --root "/home/svu/e0407728/My_FYP/TCGConv/" --num_version $PBS_JOBID --model_type "CGConv_sum" --n_run 10
 EOF

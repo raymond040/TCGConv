@@ -13,7 +13,8 @@ over epochs and over groups. The code will also print the results and the perfor
 
 #### Essential Commands
 
-If you are running the models with HPC, then you should set HPCFlag = True at all of the models in the Models folder. Else you should set HPCFlag = False.
+If you are running the models with HPC, then you should set HPCFlag = True at all of the models in the Models folder. Else you should set HPC_Flag = False.
+The sample shell files are available at the Shell folder.
 Please edit the folder and directory to your own configuration.
 
 These commands will reproduce the model results by training a model with the same hyperparameters stated in the paper.
