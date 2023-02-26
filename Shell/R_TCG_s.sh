@@ -2,12 +2,12 @@
 #PBS -P Project
 #PBS -j oe
 #PBS -q parallel24
-#PBS -l select=4:ncpus=24:mem=160gb
+#PBS -l select=1:ncpus=24:mem=160gb
 #PBS -l walltime=720:00:00
 #PBS -N R_TCG_s
 
 
-cd #PBS_o_WORKDIR;
+cd $PBS_o_WORKDIR;
 np=$(cat ${PBS_NODEFILE} | wc -l);
 
 image="/home/svu/e0407728/SIF/edge-hpc_v0.1.sif"

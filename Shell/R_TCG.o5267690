@@ -1,0 +1,14 @@
+      ======================================================================================
+     Resource Usage on 2023-01-16 11:17:40.074787:
+     JobId: 5267690.venus01  				 Project: Project 
+     Submission Host: atlas8-c01.hpc.local 
+     Exit Status: 127
+     NCPUs Requested: 24 				 NCPUs Used: 24
+     Memory Requested: 160gb 				 Memory Used: 884kb 
+     Vmem Used: 9556kb
+     CPU Time Used: 00:00:00 
+     Walltime requested: 720:00:00 			 Walltime Used: 00:00:00
+     Submit Time:  Mon Jan 16 11:17:37 2023 		 Start Time: Mon Jan 16 11:17:38 2023 
+     End Time: Mon Jan 16 11:17:40 2023 
+     Execution Nodes Used: (atlas8-c28:ncpus=24:mem=167772160kb)
+     ======================================================================================

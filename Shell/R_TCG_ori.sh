@@ -1,21 +1,14 @@
 #!/bin/bash
 #PBS -P Project
 #PBS -j oe
-#PBS -q parallel20
-#PBS -l select=2:ncpus=20:mem=160gb
-#PBS -l place=pack
+#PBS -q parallel24
+#PBS -l select=1:ncpus=24:mem=160gb
 #PBS -l walltime=720:00:00
 #PBS -N R_TCG
 
 
-cd $PBS_O_WORKDIR;
+cd $PBS_o_WORKDIR;
 np=$(cat ${PBS_NODEFILE} | wc -l);
-
-echo $SHELL
-
-bash
-module load singularity
-echo $SHELL
 
 image="/home/svu/e0407728/SIF/edge-hpc_v0.1.sif"
 singularity exec -e $image bash << EOF > $PBS_JOBID.$PBS_JOBNAME.out 2> $PBS_JOBID.$PBS_JOBNAME.err

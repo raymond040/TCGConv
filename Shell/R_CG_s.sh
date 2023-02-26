@@ -2,7 +2,7 @@
 #PBS -P Project
 #PBS -j oe
 #PBS -q parallel24
-#PBS -l select=4:ncpus=24:mem=160gb
+#PBS -l select=1:ncpus=24:mem=160gb
 #PBS -l walltime=720:00:00
 #PBS -N R_CG_s
 
